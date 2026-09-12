@@ -1,26 +1,9 @@
-/*
-  MODELO DE DATOS
-  ----------------
-  Aquí NO hay nada de HTML. Esto es a propósito: la hoja de cálculo "de verdad"
-  vive en esta estructura de datos. El DOM (la tabla que ve el usuario) es solo
-  una FOTO de este estado. Cuando algo cambia aquí, ui.js se encarga de
-  redibujar la foto.
 
-  Elegimos representar la hoja como un OBJETO cuyas llaves son nombres de celda
-  tipo "A1", "B2", etc. en vez de una matriz [fila][columna].
-  ¿Por qué? Porque una fórmula como "=A1+B2" ya viene expresada con nombres de
-  celda, así que si el modelo también usa esos nombres como llave, no hay que
-  estar convirtiendo entre "fila 0, columna 0" y "A1" todo el tiempo.
-*/
 
 const NUM_FILAS = 15;
 const NUM_COLUMNAS = 10;
-
-// El estado completo de la hoja: { "A1": "10", "B2": "=A1+5", ... }
-// Guardamos el contenido CRUDO tal como lo escribió el usuario (texto o fórmula).
 const celdas = {};
 
-// Convierte un índice de columna (0,1,2...) a letra (A,B,C...,Z,AA,AB...)
 function indiceALetra(indice) {
   let letra = "";
   indice = indice + 1;
@@ -32,12 +15,11 @@ function indiceALetra(indice) {
   return letra;
 }
 
-// Construye el nombre de celda a partir de fila (0-indexada) y columna (0-indexada)
+
 function nombreCelda(fila, columna) {
   return indiceALetra(columna) + (fila + 1);
 }
 
-// Obtiene el contenido crudo de una celda (lo que escribió el usuario)
 function obtenerContenido(nombre) {
   return celdas[nombre] !== undefined ? celdas[nombre] : "";
 }
@@ -45,4 +27,77 @@ function obtenerContenido(nombre) {
 // Guarda el contenido crudo de una celda
 function establecerContenido(nombre, valor) {
   celdas[nombre] = valor;
+}
+
+
+function letraAIndice(letras) {
+  let indice = 0;
+  for (let i = 0; i < letras.length; i++) {
+    indice = indice * 26 + (letras.charCodeAt(i) - 64); // 'A' = 65, así que -64 da 1
+  }
+  return indice - 1; 
+}
+
+function parsearReferencia(nombreReferencia) {
+  const coincidencia = nombreReferencia.match(/^([A-Za-z]+)([0-9]+)$/);
+  if (!coincidencia) {
+    throw new Error("Referencia inválida: " + nombreReferencia);
+  }
+  const columna = letraAIndice(coincidencia[1].toUpperCase());
+  const fila = parseInt(coincidencia[2], 10) - 1;
+  return { fila, columna };
+}
+
+
+function celdasEnRango(nombreInicio, nombreFin) {
+  const inicio = parsearReferencia(nombreInicio);
+  const fin = parsearReferencia(nombreFin);
+  const filaMin = Math.min(inicio.fila, fin.fila);
+  const filaMax = Math.max(inicio.fila, fin.fila);
+  const colMin = Math.min(inicio.columna, fin.columna);
+  const colMax = Math.max(inicio.columna, fin.columna);
+
+  const nombres = [];
+  for (let f = filaMin; f <= filaMax; f++) {
+    for (let c = colMin; c <= colMax; c++) {
+      nombres.push(nombreCelda(f, c));
+    }
+  }
+  return nombres;
+}
+
+
+const dependenciasDe = {};
+const dependientes = {};
+
+function actualizarDependencias(nombre, nuevasDependencias) {
+  const anteriores = dependenciasDe[nombre] || [];
+  anteriores.forEach((dep) => {
+    if (dependientes[dep]) dependientes[dep].delete(nombre);
+  });
+
+  dependenciasDe[nombre] = nuevasDependencias;
+  nuevasDependencias.forEach((dep) => {
+    if (!dependientes[dep]) dependientes[dep] = new Set();
+    dependientes[dep].add(nombre);
+  });
+}
+
+function obtenerDependientesEnCadena(nombre) {
+  const visitados = new Set();
+  const pendientes = [nombre];
+
+  while (pendientes.length > 0) {
+    const actual = pendientes.pop();
+    const hijos = dependientes[actual];
+    if (hijos) {
+      hijos.forEach((hijo) => {
+        if (!visitados.has(hijo)) {
+          visitados.add(hijo);
+          pendientes.push(hijo);
+        }
+      });
+    }
+  }
+  return Array.from(visitados);
 }
