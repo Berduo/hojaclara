@@ -1,8 +1,7 @@
-
-
 const NUM_FILAS = 15;
 const NUM_COLUMNAS = 10;
 const celdas = {};
+
 
 function indiceALetra(indice) {
   let letra = "";
@@ -20,11 +19,12 @@ function nombreCelda(fila, columna) {
   return indiceALetra(columna) + (fila + 1);
 }
 
+
 function obtenerContenido(nombre) {
   return celdas[nombre] !== undefined ? celdas[nombre] : "";
 }
 
-// Guarda el contenido crudo de una celda
+
 function establecerContenido(nombre, valor) {
   celdas[nombre] = valor;
 }
@@ -33,10 +33,11 @@ function establecerContenido(nombre, valor) {
 function letraAIndice(letras) {
   let indice = 0;
   for (let i = 0; i < letras.length; i++) {
-    indice = indice * 26 + (letras.charCodeAt(i) - 64); // 'A' = 65, así que -64 da 1
+    indice = indice * 26 + (letras.charCodeAt(i) - 64);
   }
   return indice - 1; 
 }
+
 
 function parsearReferencia(nombreReferencia) {
   const coincidencia = nombreReferencia.match(/^([A-Za-z]+)([0-9]+)$/);

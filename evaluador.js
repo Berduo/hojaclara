@@ -21,7 +21,7 @@ function tokenizar(expresion) {
       continue;
     }
 
-  
+
     if (/[A-Za-z]/.test(c)) {
       let letras = "";
       while (i < expresion.length && /[A-Za-z]/.test(expresion[i])) {
@@ -113,13 +113,13 @@ function factor(tokens, pos, pilaEvaluacion) {
     return actual.valor;
   }
 
-  
+ 
   if (actual.tipo === "REFERENCIA") {
     pos.i++;
     return obtenerValorCelda(actual.valor, pilaEvaluacion);
   }
 
-
+  // Nivel 5: 
   if (actual.tipo === "IDENTIFICADOR") {
     const nombreFuncion = actual.valor;
     pos.i++;
@@ -127,7 +127,7 @@ function factor(tokens, pos, pilaEvaluacion) {
     if (!tokens[pos.i] || tokens[pos.i].valor !== "(") {
       throw new Error("Se esperaba '(' después de " + nombreFuncion);
     }
-    pos.i++; // consumir "("
+    pos.i++; 
 
     const inicio = tokens[pos.i];
     if (!inicio || inicio.tipo !== "REFERENCIA") {
@@ -177,6 +177,7 @@ function factor(tokens, pos, pilaEvaluacion) {
   throw new Error("Token inesperado: " + actual.valor);
 }
 
+
 function aplicarFuncion(nombreFuncion, valores) {
   if (valores.length === 0) return 0;
 
@@ -194,9 +195,20 @@ function aplicarFuncion(nombreFuncion, valores) {
   }
 }
 
+
 function obtenerValorCelda(nombre, pilaEvaluacion) {
   if (pilaEvaluacion.has(nombre)) {
     throw new Error("REF_CIRCULAR");
+  }
+
+  const posicion = parsearReferencia(nombre);
+  if (
+    posicion.fila < 0 ||
+    posicion.fila >= NUM_FILAS ||
+    posicion.columna < 0 ||
+    posicion.columna >= NUM_COLUMNAS
+  ) {
+    throw new Error("REFERENCIA_INEXISTENTE");
   }
 
   const contenido = obtenerContenido(nombre);
@@ -235,7 +247,7 @@ function extraerDependencias(formulaTexto) {
 
     if (esRango) {
       celdasEnRango(tokens[i].valor, posterior.valor).forEach((c) => dependencias.add(c));
-      i += 2; // ya consumimos ":" y la segunda referencia del rango
+      i += 2; 
     } else {
       dependencias.add(tokens[i].valor);
     }
